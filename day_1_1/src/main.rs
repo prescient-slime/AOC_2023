@@ -39,12 +39,43 @@ fn part_1() {
     println!("{}", sum);
 }
 
-fn part_2() -> String {
-    let digits = vec!["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-    return digits[0].to_string();
+fn part_2() -> Result<u32, std::io::Error> {
+    let digits = [
+        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    ];
+    let input = std::fs::read_to_string("src/test.txt")?;
+    let sum2: u32 = input
+        .lines()
+        .map(|line| {
+            let first_digit = line
+                .split_whitespace()
+                .next()
+                .and_then(|word| digits.iter().position(|&d| word.starts_with(d)))
+                .or_else(|| line.chars().next()?.to_digit(10).map(|num| num as usize));
+
+            let last_digit = line
+                .split_whitespace()
+                .next_back()
+                .and_then(|word| digits.iter().rposition(|&d| word.ends_with(d)))
+                .or_else(|| line.chars().last()?.to_digit(10).map(|num| num as usize));
+
+            match (first_digit, last_digit) {
+                (Some(first), Some(last)) => Ok(first * 10 + last),
+                _ => Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Invalid line format",
+                )),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .iter()
+        .map(|&num| num as u32)
+        .sum();
+
+    Ok(sum2)
 }
 
 fn main() {
     part_1();
-    part_2();
+    println!("{:?}", part_2());
 }
